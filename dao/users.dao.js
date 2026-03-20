@@ -78,22 +78,35 @@ class usersDao {
   async signIn(req, res, next) {
     try {
       const { user_email, user_password } = req.body;
-      const find_user_query = `SELECT * FROM users WHERE user_email = :user_email AND active=true`;
+
+      const find_user_query = `
+      SELECT u.*, r.role_type
+      FROM users u
+      JOIN roles r ON u.user_role_id = r.role_id
+      WHERE u.user_email = :user_email
+      AND u.active = true
+    `;
+
       const find_user_data = await users.sequelize.query(find_user_query, {
         replacements: { user_email },
         type: users.sequelize.QueryTypes.SELECT,
       });
+
       if (find_user_data.length > 0) {
         const user = find_user_data[0];
+
         const passwordMatch = await bcrypt.compare(
           user_password,
           user.user_password,
-        )
-                        
+        );
+
         if (passwordMatch) {
-          const token = jwt.sign({ user_id: user.user_id }, SECRET_KEY, {
-            expiresIn: "1h",
-          });
+          const token = jwt.sign(
+            { user_id: user.user_id, role: user.role_type },
+            SECRET_KEY,
+            { expiresIn: "1h" },
+          );
+
           res.status(200).json({
             status: true,
             data: user,

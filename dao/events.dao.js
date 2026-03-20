@@ -13,6 +13,14 @@ class eventsDao {
         type: events.sequelize.QueryTypes.SELECT,
       });
 
+      if(data.length === 0) {
+        return res.json({
+          status: false,
+          data: [],
+          message: "No events found",
+        });
+      };
+
       res.status(200).json({
         status: true,
         data,
@@ -44,6 +52,14 @@ class eventsDao {
         },
         type: events.sequelize.QueryTypes.INSERT,
       });
+
+      if(data[0].length === 0) {
+        return res.json({
+          status: false,
+          data: null,
+          message: "Failed to create event",
+        });
+      };
 
       res.status(201).json({
         status: true,
@@ -85,8 +101,9 @@ class eventsDao {
       });
 
       if (data[0].length === 0) {
-        return res.status(404).json({
+        return res.json({
           status: false,
+          data: null,
           message: "Event not found",
         });
       }
@@ -118,14 +135,16 @@ class eventsDao {
       });
 
       if (data[0].length === 0) {
-        return res.status(404).json({
+        return res.json({
           status: false,
+          data: null,
           message: "Event not found",
         });
       }
 
       res.status(200).json({
         status: true,
+        data: null,
         message: "Event deleted successfully",
       });
     } catch (error) {

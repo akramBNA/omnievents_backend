@@ -15,8 +15,8 @@ router.post("/roles/CreateRole/", authenticateToken, roles_controller.createRole
 
 // USERS ROUTES:
 router.get("/users/getAllUsers/", authenticateToken, users_controller.getAllUsers);
-router.post("/users/signUp/", authenticateToken, users_controller.signUp);
-router.post("/users/signIn/", authenticateToken, users_controller.signIn);
+router.post("/users/signUp/", users_controller.signUp);
+router.post("/users/signIn/", users_controller.signIn);
 
 // EVENTS ROUTES
 router.get("/events/getAllEvents", authenticateToken, events_controller.getAllEvents);

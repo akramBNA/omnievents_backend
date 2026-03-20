@@ -20,8 +20,8 @@ router.post("/users/signIn/", authenticateToken, users_controller.signIn);
 
 // EVENTS ROUTES
 router.get("/events/getAllEvents", authenticateToken, events_controller.getAllEvents);
-router.post("/events", authenticateToken, events_controller.createEvent);
-router.put("/events/:id", authenticateToken, events_controller.updateEvent);
-router.delete("/events/:id", authenticateToken, events_controller.deleteEvent);
+router.post("/events/createEvent", authenticateToken, events_controller.createEvent);
+router.put("/events/updateEvent/:id", authenticateToken, events_controller.updateEvent);
+router.delete("/events/deleteEvent/:id", authenticateToken, events_controller.deleteEvent);
 
 module.exports = router;

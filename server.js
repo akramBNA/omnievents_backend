@@ -3,10 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const http = require('http');
 
-const { pool, sequelize } = require('./database/local_db');
-
+const { sequelize } = require('./database/neon_db');
 
 const port = 3000;
 
@@ -17,6 +15,18 @@ app.get('/', (req, res) => {
   res.send('Hello from your omnievents Node.js backend!');
 });
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
-});
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connected successfully!');
+
+    app.listen(port, () => {
+      console.log(`Server is running at http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error('Unable to connect to DB', error);
+    process.exit(1);
+  }
+};
+
+startServer();

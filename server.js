@@ -4,7 +4,12 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 
-const { sequelize } = require('./database/neon_db');
+// const { sequelize } = require('./database/neon_db');
+const db = process.env.DB_PROVIDER === 'local'
+  ? require('./database/local_db')
+  : require('./database/neon_db');
+
+const { sequelize } = db;
 
 const port = 3000;
 

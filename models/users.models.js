@@ -1,5 +1,5 @@
 const { Sequelize, DataTypes } = require("sequelize");
-const { roles } = require("../models/roles.models.js");
+const { roles } = require("./roles.models");
 const useNeon = process.env.DB_PROVIDER === 'neon';
 const { sequelize } = useNeon ? require('../database/neon_db') : require('../database/local_db');
 

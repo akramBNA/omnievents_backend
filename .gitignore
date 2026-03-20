@@ -1,0 +1,4 @@
+# IGNORED FILES:
+
+node_modules/
+.env

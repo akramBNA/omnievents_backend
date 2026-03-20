@@ -1,4 +1,4 @@
-const users = require("../models/users.models");
+const { users } = require("../models/users.models");
 const { roles } = require("../models/roles.models.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -7,7 +7,8 @@ const SECRET_KEY = process.env.AUTH_SECRET_KEY || "";
 class usersDao {
   async getAllUsers(req, res, next) {
     try {
-      const get_all_users_query ="SELECT * FROM users WHERE active=true ORDER BY user_id ASC";
+      const get_all_users_query =
+        "SELECT * FROM users WHERE active=true ORDER BY user_id ASC";
       const get_all_users_data = await users.sequelize.query(
         get_all_users_query,
         {
@@ -30,7 +31,7 @@ class usersDao {
     } catch (error) {
       return next(error);
     }
-  };
+  }
 
   async signUp(req, res, next) {
     try {
@@ -48,7 +49,12 @@ class usersDao {
       const hashedPassword = await bcrypt.hash(user_password, 10);
       const create_user_query = `INSERT INTO users (user_name, user_lastname, user_email, user_password) VALUES (:user_name, :user_lastname, :user_email, :user_password) RETURNING *`;
       const create_user_data = await users.sequelize.query(create_user_query, {
-        replacements: { user_name, user_lastname, user_email, user_password: hashedPassword },
+        replacements: {
+          user_name,
+          user_lastname,
+          user_email,
+          user_password: hashedPassword,
+        },
         type: users.sequelize.QueryTypes.INSERT,
       });
       if (create_user_data) {
@@ -67,7 +73,7 @@ class usersDao {
     } catch (error) {
       return next(error);
     }
-  };
+  }
 
   async signIn(req, res, next) {
     try {
@@ -79,12 +85,19 @@ class usersDao {
       });
       if (find_user_data.length > 0) {
         const user = find_user_data[0];
-        const passwordMatch = await bcrypt.compare(user_password, user.user_password);
+        const passwordMatch = await bcrypt.compare(
+          user_password,
+          user.user_password,
+        )
+                        
         if (passwordMatch) {
-          const token = jwt.sign({ user_id: user.user_id }, SECRET_KEY, { expiresIn: "1h" });
+          const token = jwt.sign({ user_id: user.user_id }, SECRET_KEY, {
+            expiresIn: "1h",
+          });
           res.status(200).json({
             status: true,
-            data: { token },
+            data: user,
+            token: token,
             message: "Authentication successful",
           });
         } else {
@@ -104,7 +117,7 @@ class usersDao {
     } catch (error) {
       return next(error);
     }
-  };
+  }
 }
 
 module.exports = usersDao;

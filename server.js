@@ -10,7 +10,7 @@ const db =
     : require("./database/neon_db");
 
 const { sequelize } = db;
-
+const routes = require("./routes/routes");
 const port = 3000;
 
 app.use(cors());
@@ -19,6 +19,8 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Hello from your omnievents Node.js backend!");
 });
+
+app.use("/api", routes);
 
 let isDbConnected = false;
 

@@ -33,7 +33,7 @@ const users_events = sequelize.define(
       },
     },
     subscribed_at: {
-      type: DataTypes.timestamps,
+      type: DataTypes.DATE,
       allowNull: false,
     },
     active: {

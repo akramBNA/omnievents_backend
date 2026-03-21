@@ -3,27 +3,66 @@ const events = require("../models/events.models");
 class eventsDao {
   async getAllEvents(req, res, next) {
     try {
-      const query = `
-        SELECT * FROM events
-        WHERE active = true
-        ORDER BY event_start_date ASC
-      `;
+      let { limit = 10, offset = 0, keyword = "" } = req.query;
 
-      const data = await events.sequelize.query(query, {
+      // limit = Math.min(parseInt(limit) || 10, 50);
+      // offset = parseInt(offset) || 0;
+      // keyword = keyword.trim();
+
+      const searchKeyword = keyword ? `%${keyword}%` : "%";
+
+      const query = `
+      WITH filtered AS (
+        SELECT *
+        FROM events
+        WHERE active = true
+        AND (
+          event_name ILIKE :search
+          OR event_details ILIKE :search
+        )
+      ),
+      total_count AS (
+        SELECT COUNT(*)::int AS total FROM filtered
+      )
+      SELECT 
+        (SELECT total FROM total_count) AS total,
+        json_agg(ev) AS events
+      FROM (
+        SELECT *
+        FROM filtered
+        ORDER BY event_start_date ASC NULLS LAST
+        LIMIT :limit OFFSET :offset
+      ) ev;
+    `;
+
+      const [result] = await events.sequelize.query(query, {
+        replacements: {
+          search: searchKeyword,
+          limit,
+          offset,
+        },
         type: events.sequelize.QueryTypes.SELECT,
       });
 
-      if(data.length === 0) {
-        return res.json({
-          status: false,
+      const eventsList = result?.events || [];
+
+      if (!eventsList || eventsList.length === 0) {
+        return res.status(200).json({
+          status: true,
           data: [],
+          total: 0,
+          limit,
+          offset,
           message: "No events found",
         });
-      };
+      }
 
       res.status(200).json({
         status: true,
-        data,
+        data: eventsList,
+        total: result.total,
+        limit,
+        offset,
         message: "Events retrieved successfully",
       });
     } catch (error) {
@@ -53,13 +92,13 @@ class eventsDao {
         type: events.sequelize.QueryTypes.INSERT,
       });
 
-      if(data[0].length === 0) {
+      if (data[0].length === 0) {
         return res.json({
           status: false,
           data: null,
           message: "Failed to create event",
         });
-      };
+      }
 
       res.status(201).json({
         status: true,

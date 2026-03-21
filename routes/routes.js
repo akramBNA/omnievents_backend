@@ -8,6 +8,7 @@ const authorizeRoles = require('../middleware/roles.middleware');
 const users_controller = require("../controllers/users.controllers");
 const roles_controller = require("../controllers/roles.controllers");
 const events_controller = require("../controllers/events.controllers");
+const users_events_controller = require("../controllers/users_events.controllers");
 
 
 // ROLES ROUTES:
@@ -24,5 +25,8 @@ router.get("/events/getAllEvents", authenticateToken, events_controller.getAllEv
 router.post("/events/createEvent", authenticateToken, events_controller.createEvent);
 router.put("/events/updateEvent/:id", authenticateToken, events_controller.updateEvent);
 router.delete("/events/deleteEvent/:id", authenticateToken, events_controller.deleteEvent);
+
+// USERS_EVENTS ROUTES
+router.post("/users_events/subscribeToEvent", authenticateToken, users_events_controller.subscribeToEvent);
 
 module.exports = router;

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const authenticateToken = require('../middleware/authentication.middleware');
+const authorizeRoles = require('../middleware/roles.middleware');
 
 
 const users_controller = require("../controllers/users.controllers");

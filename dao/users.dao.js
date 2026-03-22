@@ -156,7 +156,7 @@ class usersDao {
       const { user_email, user_password } = req.body;
 
       const find_user_query = `
-      SELECT u.*, r.role_type,
+      SELECT u.*, r.role_type
       FROM users u
       JOIN roles r ON u.user_role_id = r.role_id
       WHERE u.user_email = :user_email

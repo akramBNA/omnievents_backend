@@ -3,14 +3,23 @@ const events = require("../models/events.models");
 class eventsDao {
   async getAllEvents(req, res, next) {
     try {
+      const userId = req.query.user_id;
       let { limit = 10, offset = 0, keyword = "" } = req.query;
 
       const searchKeyword = keyword ? `${keyword}%` : "%";
 
       const query = `
       WITH filtered AS (
-        SELECT *
-        FROM events
+        SELECT *,
+          CASE 
+            WHEN :userId IS NOT NULL AND EXISTS (
+              SELECT 1 FROM users_events ue
+              WHERE ue.event_id = e.event_id
+              AND ue.user_id = :userId
+            ) THEN true
+            ELSE false
+          END as "isSubscribed"
+        FROM events e
         WHERE active = true
         AND event_name ILIKE :search
       ),
@@ -29,31 +38,16 @@ class eventsDao {
     `;
 
       const [result] = await events.sequelize.query(query, {
-        replacements: {
-          search: searchKeyword,
-          limit,
-          offset,
-        },
+        replacements: { search: searchKeyword, limit, offset, userId },
         type: events.sequelize.QueryTypes.SELECT,
       });
 
       const eventsList = result?.events || [];
 
-      if (!eventsList || eventsList.length === 0) {
-        return res.status(200).json({
-          status: true,
-          data: [],
-          total: 0,
-          limit,
-          offset,
-          message: "No events found",
-        });
-      }
-
       res.status(200).json({
         status: true,
         data: eventsList,
-        total: result.total,
+        total: result.total || 0,
         limit,
         offset,
         message: "Events retrieved successfully",

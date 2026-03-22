@@ -54,41 +54,6 @@ class rolesDao {
       return next(error);
     }
   }
-
-  async updateUserRole(req, res, next) {
-    try {
-      const { id } = req.params;
-      const { role_id } = req.body;
-
-      const query = `
-      UPDATE users
-      SET user_role_id = :role_id
-      WHERE user_id = :id
-      RETURNING *;
-    `;
-
-      const [result] = await users.sequelize.query(query, {
-        replacements: { id, role_id },
-        type: users.sequelize.QueryTypes.UPDATE,
-      });
-
-      if (result.length === 0) {
-        return res.json({
-          status: false,
-          data: null,
-          message: "Failed to update user role",
-        });
-      }
-
-      res.status(200).json({
-        status: true,
-        data: result[0],
-        message: "Role updated successfully",
-      });
-    } catch (error) {
-      return next(error);
-    }
-  }
 }
 
 module.exports = rolesDao;

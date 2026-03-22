@@ -133,10 +133,21 @@ class usersDao {
         },
         type: users.sequelize.QueryTypes.INSERT,
       });
+
+      const token = jwt.sign(
+        {
+          user_id: create_user_data[0][0].user_id,
+          role: "user",
+        },
+        SECRET_KEY,
+        { expiresIn: "1h" },
+      );
+      
       if (create_user_data) {
         res.status(201).json({
           status: true,
           data: create_user_data[0][0],
+          token: token,
           message: "User created successfully",
         });
       } else {

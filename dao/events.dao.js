@@ -3,7 +3,7 @@ const events = require("../models/events.models");
 class eventsDao {
   async getAllEvents(req, res, next) {
     try {
-      const userId = req.query.user_id;
+      const userId = req.query.user_id ? Number(req.query.user_id) : null;
       let { limit = 10, offset = 0, keyword = "" } = req.query;
 
       const searchKeyword = keyword ? `${keyword}%` : "%";
@@ -38,7 +38,12 @@ class eventsDao {
     `;
 
       const [result] = await events.sequelize.query(query, {
-        replacements: { search: searchKeyword, limit, offset, userId },
+        replacements: {
+          search: searchKeyword,
+          limit: Number(limit),
+          offset: Number(offset),
+          userId,
+        },
         type: events.sequelize.QueryTypes.SELECT,
       });
 

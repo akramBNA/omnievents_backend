@@ -5,21 +5,14 @@ class eventsDao {
     try {
       let { limit = 10, offset = 0, keyword = "" } = req.query;
 
-      // limit = Math.min(parseInt(limit) || 10, 50);
-      // offset = parseInt(offset) || 0;
-      // keyword = keyword.trim();
-
-      const searchKeyword = keyword ? `%${keyword}%` : "%";
+      const searchKeyword = keyword ? `${keyword}%` : "%";
 
       const query = `
       WITH filtered AS (
         SELECT *
         FROM events
         WHERE active = true
-        AND (
-          event_name ILIKE :search
-          OR event_details ILIKE :search
-        )
+        AND event_name ILIKE :search
       ),
       total_count AS (
         SELECT COUNT(*)::int AS total FROM filtered

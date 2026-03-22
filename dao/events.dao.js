@@ -16,6 +16,7 @@ class eventsDao {
               SELECT 1 FROM users_events ue
               WHERE ue.event_id = e.event_id
               AND ue.user_id = :userId
+              AND ue.active = true
             ) THEN true
             ELSE false
           END as "isSubscribed"

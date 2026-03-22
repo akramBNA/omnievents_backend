@@ -7,27 +7,103 @@ const SECRET_KEY = process.env.AUTH_SECRET_KEY || "";
 class usersDao {
   async getAllUsers(req, res, next) {
     try {
-      const get_all_users_query =
-        "SELECT * FROM users WHERE active=true ORDER BY user_id ASC";
-      const get_all_users_data = await users.sequelize.query(
-        get_all_users_query,
-        {
-          type: users.sequelize.QueryTypes.SELECT,
+      let { limit = 10, offset = 0, keyword = "" } = req.query;
+
+      limit = Math.min(parseInt(limit) || 10, 50);
+      offset = parseInt(offset) || 0;
+      keyword = keyword.trim();
+
+      const searchKeyword = keyword ? `${keyword}%` : "%";
+
+      const query = `
+      WITH filtered AS (
+        SELECT 
+          u.user_id,
+          u.user_name,
+          u.user_lastname,
+          u.user_email,
+          u.user_role_id,
+          r.role_type
+        FROM users u
+        JOIN roles r ON u.user_role_id = r.role_id
+        WHERE u.active = true
+        AND (
+          u.user_name ILIKE :search
+          OR u.user_lastname ILIKE :search
+          OR u.user_email ILIKE :search
+        )
+      ),
+      total_count AS (
+        SELECT COUNT(*)::int AS total FROM filtered
+      )
+      SELECT 
+        (SELECT total FROM total_count) AS total,
+        json_agg(u) AS users
+      FROM (
+        SELECT *
+        FROM filtered
+        ORDER BY user_id ASC
+        LIMIT :limit OFFSET :offset
+      ) u;
+    `;
+
+      const [result] = await users.sequelize.query(query, {
+        replacements: {
+          search: searchKeyword,
+          limit,
+          offset,
         },
-      );
-      if (get_all_users_data) {
-        res.status(200).json({
-          status: true,
-          data: get_all_users_data,
-          message: "Retrieved successfully",
-        });
-      } else {
-        res.json({
+        type: users.sequelize.QueryTypes.SELECT,
+      });
+
+      const usersList = result?.users || [];
+
+      return res.status(200).json({
+        status: true,
+        data: usersList,
+        total: result?.total || 0,
+        limit,
+        offset,
+        message:
+          usersList.length === 0
+            ? "No users found"
+            : "Users retrieved successfully",
+      });
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async updateUserRole(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { role_id } = req.body;
+
+      const query = `
+      UPDATE users
+      SET user_role_id = :role_id
+      WHERE user_id = :id
+      RETURNING *;
+    `;
+
+      const [result] = await users.sequelize.query(query, {
+        replacements: { id, role_id },
+        type: users.sequelize.QueryTypes.UPDATE,
+      });
+
+      if (result.length === 0) {
+        return res.json({
           status: false,
-          data: [],
-          message: "Failed to retrieve data",
+          data: null,
+          message: "Failed to update user role",
         });
       }
+
+      res.status(200).json({
+        status: true,
+        data: result[0],
+        message: "Role updated successfully",
+      });
     } catch (error) {
       return next(error);
     }

@@ -6,6 +6,9 @@ module.exports = {
   getAllUsers: function (req, res, next) {
     users_instance.getAllUsers(req, res, next);
   },
+  updateUserRole: function (req, res, next) {
+    users_instance.updateUserRole(req, res, next);
+  },
   signUp: function (req, res, next) {
     users_instance.signUp(req, res, next);
   },

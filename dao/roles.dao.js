@@ -3,7 +3,8 @@ const roles = require("../models/roles.models");
 class rolesDao {
   async getAllRoles(req, res, next) {
     try {
-      const get_all_roles_query ="SELECT * FROM roles  WHERE active=true ORDER BY role_id ASC";
+      const get_all_roles_query =
+        "SELECT * FROM roles  WHERE active=true ORDER BY role_id ASC";
       const get_all_roles_data = await roles.sequelize.query(
         get_all_roles_query,
         {

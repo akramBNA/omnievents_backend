@@ -112,6 +112,27 @@ class usersDao {
   async signUp(req, res, next) {
     try {
       const { user_name, user_lastname, user_email, user_password } = req.body;
+
+      if (
+        !user_name?.trim() ||
+        !user_lastname?.trim() ||
+        !user_email?.trim() ||
+        !user_password
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "All fields (name, lastname, email, password) are required.",
+        });
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(user_email)) {
+        return res.status(400).json({
+          success: false,
+          message: "Please provide a valid email address.",
+        });
+      }
+
       const existingUser = await users.findOne({
         where: { user_email },
       });
@@ -122,41 +143,44 @@ class usersDao {
           message: "User with this email already exists",
         });
       }
+
       const hashedPassword = await bcrypt.hash(user_password, 10);
-      const create_user_query = `INSERT INTO users (user_name, user_lastname, user_email, user_password) VALUES (:user_name, :user_lastname, :user_email, :user_password) RETURNING *`;
-      const create_user_data = await users.sequelize.query(create_user_query, {
+
+      const create_user_query = `
+      INSERT INTO users (user_name, user_lastname, user_email, user_password) 
+      VALUES (:user_name, :user_lastname, :user_email, :user_password) 
+      RETURNING user_id, user_name, user_lastname, user_email`;
+
+      const [results] = await users.sequelize.query(create_user_query, {
         replacements: {
-          user_name,
-          user_lastname,
-          user_email,
+          user_name: user_name.trim(),
+          user_lastname: user_lastname.trim(),
+          user_email: user_email.toLowerCase().trim(),
           user_password: hashedPassword,
         },
         type: users.sequelize.QueryTypes.INSERT,
       });
 
+      const newUser = results[0];
+      if (!newUser) {
+        throw new Error("Database failed to return new user data");
+      }
+
       const token = jwt.sign(
         {
-          user_id: create_user_data[0][0].user_id,
+          user_id: newUser.user_id,
           role: "user",
         },
         SECRET_KEY,
         { expiresIn: "1h" },
       );
-      
-      if (create_user_data) {
-        res.status(201).json({
-          status: true,
-          data: create_user_data[0][0],
-          token: token,
-          message: "User created successfully",
-        });
-      } else {
-        res.json({
-          status: false,
-          data: [],
-          message: "Failed to create user",
-        });
-      }
+
+      return res.status(201).json({
+        status: true,
+        data: newUser,
+        token: token,
+        message: "User created successfully",
+      });
     } catch (error) {
       return next(error);
     }

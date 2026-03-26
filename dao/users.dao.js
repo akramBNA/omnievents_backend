@@ -190,54 +190,62 @@ class usersDao {
     try {
       const { user_email, user_password } = req.body;
 
+      if (!user_email?.trim() || !user_password) {
+        return res.status(400).json({
+          status: false,
+          message: "Email and password are required.",
+        });
+      }
+
       const find_user_query = `
-      SELECT u.*, r.role_type
+      SELECT u.user_id, u.user_password, u.user_email, u.active, r.role_type
       FROM users u
       JOIN roles r ON u.user_role_id = r.role_id
       WHERE u.user_email = :user_email
       AND u.active = true
+      LIMIT 1
     `;
 
       const find_user_data = await users.sequelize.query(find_user_query, {
-        replacements: { user_email },
+        replacements: { user_email: user_email.trim().toLowerCase() },
         type: users.sequelize.QueryTypes.SELECT,
       });
 
-      if (find_user_data.length > 0) {
-        const user = find_user_data[0];
-
-        const passwordMatch = await bcrypt.compare(
-          user_password,
-          user.user_password,
-        );
-
-        if (passwordMatch) {
-          const token = jwt.sign(
-            { user_id: user.user_id, role: user.role_type },
-            SECRET_KEY,
-            { expiresIn: "1h" },
-          );
-
-          res.status(200).json({
-            status: true,
-            data: user,
-            token: token,
-            message: "Authentication successful",
-          });
-        } else {
-          res.status(401).json({
-            status: false,
-            data: [],
-            message: "Invalid credentials",
-          });
-        }
-      } else {
-        res.status(404).json({
+      if (find_user_data.length === 0) {
+        return res.status(401).json({
           status: false,
-          data: [],
-          message: "User not found",
+          message: "Invalid email or password",
         });
       }
+
+      const user = find_user_data[0];
+
+      const passwordMatch = await bcrypt.compare(
+        user_password,
+        user.user_password,
+      );
+
+      if (!passwordMatch) {
+        return res.status(401).json({
+          status: false,
+          message: "Invalid email or password",
+        });
+      }
+
+      const token = jwt.sign(
+        { user_id: user.user_id, role: user.role_type },
+        SECRET_KEY,
+        { expiresIn: "1h" },
+      );
+
+      delete user.user_password;
+
+      return res.status(200).json({
+        status: true,
+        data: user,
+        token: token,
+        message: "Authentication successful",
+      });
     } catch (error) {
       return next(error);
     }
